@@ -11,11 +11,20 @@ output:
     toc: yes
 ---
 
-# Setup
+# Introduction
 
-Load libraries, source scripts, set directories
+### Assessment Center (AC)
+AC is a method to appraise and predict behavioral performance. During an AC, a candidate completes a series of simulation exercises. Evaluators rate the candidate along behavioral dimensions thought to reflect abilities and traits that contribute to performance for a particular job or career field. The AC is widely used, and has generally proven to be an effective and fair way to assess behavioral dimensions related to job performance.
 
-```{r setup, message=FALSE, warning=FALSE}
+### Adaptive Design Optimization (ADO)
+ADO is a model-based approach to optimization in that it uses a quantitative model to predict outcomes based on the model's parameters and design variables. ADO uses these predictions to quantify the expected information that would be gained by gathering further observations. In this way, ADO can be used to adjust design variables in real-time to optimize the value of information gained.
+
+### Application of ADO to AC
+The cost of the AC, in terms of compensation and time for candidates and evaluators to complete exercises and assessments, may prohibit its use. This notebook demonstrates how to use ADO to increase the efficiency and validity of behavioral rating in the AC. In the context of an AC, ADO can be used to adaptively decide which candidates and behavioral dimensions to observe next in order to maximally reduce uncertainty in behavioral ratings. We demonstrate ADO in a simulation study based on an AC used by the U.S. Air Force. 
+
+```{r setup, include = FALSE, message=FALSE, warning=FALSE}
+## Load libraries, source scripts, set directories
+
 rm(list=ls())
 
 library(tidyr)
@@ -25,7 +34,7 @@ library(matrixStats)
 library(parallel)
 library(viridis)
 
-source('ado_funs.R')
+source('./utilities/ado_funs.R')
 
 output.dir <- 'outputs'
 input.dir  <- 'inputs'
@@ -34,7 +43,13 @@ m.eps      <- .Machine$double.eps
 sim.inputs <- readRDS(file.path(input.dir, 'SimulationInputs.RDS'))
 ```
 
-```{r thresholds, message=FALSE, warning=FALSE, fig.width = 3, fig.height = 3}
+# Example Use Case
+To contextualize this ADO simulation study, I present an example based on the Air Force’s use of an AC for select occupations. The AC is held across a multi-week assessment and selection course. During the course, candidates perform numerous simulation exercises designed to measure eight behavioral attributes. Trained evaluators observe candidates while they complete simulation exercises and they rate candidates based on those attributes.
+
+### Historic Attribute Values
+Evaluators provided integer ratings ranging from 0 (lowest) to 5 (highest). Figure 1 shows the historical distributions for the eight behavioral attributes.
+
+```{r thresholds, include = FALSE, message=FALSE, warning=FALSE}
 ## Load previously estimated thresholds of multinomial logistic regression
 thresholds <- sim.inputs$thresholds
 thresh     <- as.numeric(thresholds$Value)
@@ -48,13 +63,27 @@ combos <- multi(n.seq, thresholds)
 combos[combos == 0] <- m.eps
 
 ## Plot the multinomial model
-plot.multinomial(combos)
+p1 <- plot.multinomial(combos)
 
 ## Convert to log scale to prevent underflow errors
 post <- log(combos)
 ```
 
-```{r priors, message=FALSE, warning=FALSE, fig.width = 3, fig.height = 3}
+```{r fig.cap = "Figure 1. Distributions of historic ratings by attribute", fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, echo = FALSE}
+p1
+```
+
+### ADO Objectives
+Presently, all candidates are observed an equal number of times for all attributes. However, it may be relatively more or less difficult to determine the underlying ability of a particular candidate and for a particular attribute. ADO can continuously update the degree of uncertainty about it's estimates of candidates' abilities. ADO can use this information to observe candidates and attributes with greatest uncertainty more frequently.
+
+### Simulation Study
+To demonstrate ADO, I conducted three simulations.
+
+  + Random: The random sampling procedure selected candidates and attributes for observation randomly with replacement.
+  + Grid-based: The grid-based sampling procedure followed a Latin cube design--it uniformly sampled all candidates and attributes.
+  + ADO: The ADO sampling procedure selected which candidate and battributes to observe next based on the algorithm’s recommendations.
+
+```{r priors, include = FALSE, message=FALSE, warning=FALSE}
 df.sub <- sim.inputs$df.sub
 
 ## Generate priors for each attribute
@@ -69,16 +98,31 @@ for (i in att.list){
 }
 
 ## Plot priors
-plot.priors(p.vec, n.seq)
+# plot.priors(p.vec, n.seq)
 
 ```
 
+### Results
+Given that the true values for each candidate and attribute are known in the simulation study, it is possible to compute the probability that ADO has recovered the true values. Figure 2 shows the average probability that ADO has recovered the true values, across candidates and attributes, as a function of the number of samples collected. Figure 2 shows results separately for each of the three sampling procedures.
 
-```{r run_simulation, message=FALSE, warning=FALSE, fig.width = 3, fig.height = 3}
+Accuracy initially increases given all sampling approaches. However, ADO increasingly focuses on candidates and attributes with greatest uncertainty, allowing it to outperform other approaches as the number of samples increases.
+
+```{r run_simulation, include = FALSE, message=FALSE, warning=FALSE}
 p.est <- sim.inputs$p.est
 p.est <- left_join(p.est %>% select(-p), p.vec, by = 'Attribute')
 
-sim.seq  <- rep(c('ADO', 'Random', 'Grid'), each = 10)
-outcomes <- mclapply(sim.seq, function(x) run_ado(p.est, combos, post, bns, x))
-plot.final(outcomes)
+sim.seq  <- rep(c('ADO', 'Random', 'Grid'), each = 25)
+
+if (file.exists(file.path(input.dir, 'SimulationResults.RDS'))){
+  outcomes <- readRDS(file.path(input.dir, 'SimulationResults.RDS'))
+} else {
+  outcomes <- mclapply(sim.seq, function(x) run_ado(p.est, combos, post, bns, x))
+  saveRDS(outcomes, file.path(input.dir, 'SimulationResults.RDS'))
+}
+
+p2 <- plot.final(outcomes)
+```
+
+```{r fig.cap = "Figure 2. Model accuracy as a function of number of samples", fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, echo = FALSE}
+p2
 ```
