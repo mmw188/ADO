@@ -42,28 +42,20 @@ calc.collapse.u <- function(p.prior, combos, post, bns){
   return(g.util)
 }
 
-plot.multinomial <- function(combos){
+plot.rating.distributions <- function(df){
   
-  df <- data.frame(`Latent Value` = as.numeric(rownames(combos)), as.data.frame(combos))
+  df.obs <- df %>%
+    group_by(Attribute, Score) %>%
+    summarise(total = sum(obs)) %>%
+    group_by(Attribute) %>%
+    mutate(pct = total/sum(total)) %>%
+    ungroup()
   
-  df <- gather(df, key = 'Rating', value = 'Probability', colnames(df)[grepl('Var.', colnames(df))]) %>%
-    mutate(Rating = case_when(Rating == 'Var.0' ~ 'One',
-                              Rating == 'Var.1' ~ 'Two',
-                              Rating == 'Var.2' ~ 'Three',
-                              Rating == 'Var.3' ~ 'Four',
-                              Rating == 'Var.4' ~ 'Five',
-                              Rating == 'Var.5' ~ 'Six'))
-  
-  df$Rating <- factor(df$Rating, levels = c('One', 'Two', 'Three', 'Four', 'Five', 'Six'))
-  
-  ggplot(df, aes(x = Rating, y = Latent.Value, fill = Probability)) +
-    geom_tile(alpha = .5) +
-    ggtitle('Multinomial Model') +
-    scale_x_discrete(name = 'Assigned Scores', expand = c(0, 0)) +
-    scale_y_continuous(name = 'Latent Value', expand = c(0, 0), breaks = c(-4.5, -3.0, -1.5, 0, 1.5, 3.0, 4.5), labels = c('-4.5', '-3.0', '-1.5', '0.0', '1.5', '3.0', '4.5')) +
-    scale_fill_viridis(limits = c(0, 1), labels = scales::percent) +
-    theme_bw() +
-    theme(plot.title = element_text(hjust = 0.5))
+  p1 <- ggplot(df.obs, aes(x = Score, y = pct, color = Attribute)) +
+    geom_line() +
+    scale_y_continuous(name = 'Percentage (%)', limits = c(0, .75), breaks = c(0, .25, .5, .75), labels = scales::percent) +
+    scale_color_brewer(palette = 'Set1') +
+    theme_bw()
 }
 
 plot.priors <- function(p.vec, n.seq){
@@ -83,12 +75,52 @@ plot.priors <- function(p.vec, n.seq){
     theme_bw()
 }
 
+plot.multi.heat <- function(df){
+    
+    df.obs <- combos %>%
+      group_by(Attribute, Score) %>%
+      summarise(total = sum(obs)) %>%
+      group_by(Attribute) %>%
+      mutate(pct = total/sum(total)) %>%
+      ungroup()
+    
+    p1 <- ggplot(df.obs, aes(x = Score, y = pct, color = Attribute)) +
+      geom_line() +
+      scale_y_continuous(name = 'Percentage (%)', limits = c(0, .75), breaks = c(0, .25, .5, .75), labels = scales::percent) +
+      scale_color_brewer(palette = 'Set1') +
+      theme_bw()
+    
+    
+    df <- data.frame(`Latent Value` = as.numeric(rownames(combos)), as.data.frame(combos))
+    
+    df <- gather(df, key = 'Rating', value = 'Probability', colnames(df)[grepl('Var.', colnames(df))]) %>%
+      mutate(Rating = case_when(Rating == 'Var.0' ~ 'One',
+                                Rating == 'Var.1' ~ 'Two',
+                                Rating == 'Var.2' ~ 'Three',
+                                Rating == 'Var.3' ~ 'Four',
+                                Rating == 'Var.4' ~ 'Five',
+                                Rating == 'Var.5' ~ 'Six'))
+    
+    df$Rating <- factor(df$Rating, levels = c('One', 'Two', 'Three', 'Four', 'Five', 'Six'))
+    
+    ggplot(df, aes(x = Rating, y = Latent.Value, fill = Probability)) +
+      geom_tile(alpha = .5) +
+      ggtitle('Multinomial Model') +
+      scale_x_discrete(name = 'Assigned Scores', expand = c(0, 0)) +
+      scale_y_continuous(name = 'Latent Value', expand = c(0, 0), breaks = c(-4.5, -3.0, -1.5, 0, 1.5, 3.0, 4.5), labels = c('-4.5', '-3.0', '-1.5', '0.0', '1.5', '3.0', '4.5')) +
+      scale_fill_viridis(limits = c(0, 1), labels = scales::percent) +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5))
+}
+  
+  
 plot.final <- function(outcomes){
   outcomes <- outcomes %>% bind_rows() %>%
     group_by(sim.round, method) %>%
-    summarise(Prob.Correct = mean(Prob.Correct))
+    summarise(Prob.Correct = mean(Prob.Correct)) %>%
+    rename(Method = method)
   
-  ggplot(outcomes, aes(x = sim.round, y = Prob.Correct, color = method)) +
+  ggplot(outcomes, aes(x = sim.round, y = Prob.Correct, color = Method)) +
     geom_line() +
     scale_x_continuous(name = 'Round') +
     scale_y_continuous(name = 'Correct Label (%)', labels = scales::percent, limits = c(.4, 1)) +

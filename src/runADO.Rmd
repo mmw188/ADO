@@ -32,7 +32,6 @@ library(dplyr)
 library(ggplot2)
 library(matrixStats)
 library(parallel)
-library(viridis)
 
 source('./utilities/ado_funs.R')
 
@@ -62,11 +61,12 @@ bns <- unlist(lapply(n.seq,
 combos <- multi(n.seq, thresholds)
 combos[combos == 0] <- m.eps
 
-## Plot the multinomial model
-p1 <- plot.multinomial(combos)
-
 ## Convert to log scale to prevent underflow errors
 post <- log(combos)
+
+## Plot distribution of ratings
+df.sub <- sim.inputs$df.sub
+p1 <- plot.rating.distributions(df.sub)
 ```
 
 ```{r fig.cap = "Figure 1. Distributions of historic ratings by attribute", fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, echo = FALSE}
@@ -84,7 +84,6 @@ To demonstrate ADO, I conducted three simulations.
   + ADO: The ADO sampling procedure selected which candidate and battributes to observe next based on the algorithm’s recommendations.
 
 ```{r priors, include = FALSE, message=FALSE, warning=FALSE}
-df.sub <- sim.inputs$df.sub
 
 ## Generate priors for each attribute
 att.list <- unique(df.sub$Attribute)
@@ -102,7 +101,7 @@ for (i in att.list){
 
 ```
 
-### Results
+# Results
 Given that the true values for each candidate and attribute are known in the simulation study, it is possible to compute the probability that ADO has recovered the true values. Figure 2 shows the average probability that ADO has recovered the true values, across candidates and attributes, as a function of the number of samples collected. Figure 2 shows results separately for each of the three sampling procedures.
 
 Accuracy initially increases given all sampling approaches. However, ADO increasingly focuses on candidates and attributes with greatest uncertainty, allowing it to outperform other approaches as the number of samples increases.
