@@ -1,5 +1,5 @@
 ---
-title: "Adaptive Design Optimization (ADO) for running assessment center"
+title: 'Adaptive Design Optimization (ADO) for running assessment center'
 author: '[Matt Walsh]'
 dte: February 2018
 output:
@@ -69,7 +69,7 @@ df.sub <- sim.inputs$df.sub
 p1 <- plot.rating.distributions(df.sub)
 ```
 
-```{r fig.cap = "Figure 1. Distributions of historic ratings by attribute", fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, echo = FALSE}
+```{r fig.cap = 'Figure 1. Distributions of historic ratings by attribute', fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, message = FALSE, warnings = FALSE, echo = FALSE}
 p1
 ```
 
@@ -122,6 +122,6 @@ if (file.exists(file.path(input.dir, 'SimulationResults.RDS'))){
 p2 <- plot.final(outcomes)
 ```
 
-```{r fig.cap = "Figure 2. Model accuracy as a function of number of samples", fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, echo = FALSE}
+```{r fig.cap = 'Figure 2. Model accuracy as a function of number of samples', fig.width = 6.5, fig.height = 4, fig.fullwidth = TRUE, message = FALSE, warnings = FALSE, echo = FALSE}
 p2
 ```
