@@ -1,8 +1,10 @@
 # 1.0 Adaptive Design Optimization (ADO)
+An application of ADO to assessment centers (AC)
+
 # 2.0 Description
 ADO is a model-based approach to optimization in that it uses a quantitative model to predict outcomes based on the model's parameters and design variables. ADO uses these predictions to quantify the expected information that would be gained by gathering further observations. In this way, ADO can be used to adjust design variables in real-time to optimize the value of information gained.
 
-The code in this repository applies ADO to assement centers (AC), a method to appraise and predict behavioral performance. During an AC, a candidate completes a series of simulation exercises. Evaluators rate the candidate along behavioral dimensions thought to reflect abilities and traits that contribute to performance for a particular job or career field.
+The code in this repository applies ADO to assessment centers (AC), a method to appraise and predict behavioral performance. During an AC, a candidate completes a series of simulation exercises. Evaluators rate the candidate along behavioral dimensions thought to reflect abilities and traits that contribute to performance for a particular job or career field.
 
 The cost of the AC, in terms of compensation and time for candidates and evaluators to complete exercises and assessments, may prohibit its use. This project demonstrates how to use ADO to increase the efficiency and validity of behavioral rating in the AC.
 
